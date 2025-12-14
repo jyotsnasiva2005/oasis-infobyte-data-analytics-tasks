@@ -1,0 +1,123 @@
+import zipfile
+import os
+
+zip_files = ['/content/archive (4).zip', '/content/archive (5).zip']
+output_dir = '/content/'
+
+for zip_file_path in zip_files:
+    if os.path.exists(zip_file_path):
+        try:
+            with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+                zip_ref.extractall(output_dir)
+            print(f"Extracted {zip_file_path} to {output_dir}")
+        except zipfile.BadZipFile:
+            print(f"Error: {zip_file_path} is not a valid zip file and could not be extracted.")
+        except Exception as e:
+            print(f"An unexpected error occurred while processing {zip_file_path}: {e}")
+    else:
+        print(f"Warning: {zip_file_path} not found.")
+
+print("Unzipping process completed.")
+# -------------------------------------------------
+# Project : Data Cleaning
+# Level   : 1
+# Dataset 1: NYC Airbnb Open Data
+# Dataset 2: YouTube Trending Videos
+# -------------------------------------------------
+
+import pandas as pd
+import numpy as np
+
+# -------------------------------------------------
+# 1. Load Datasets
+# -------------------------------------------------
+
+try:
+    airbnb_df = pd.read_csv("AB_NYC_2019.csv")
+    youtube_df = pd.read_csv("INvideos.csv")
+    print("Both datasets loaded successfully.\n")
+except FileNotFoundError:
+    print("Error: Dataset files not found. Please check file names.")
+    exit()
+
+# -------------------------------------------------
+# 2. DATA CLEANING – AIRBNB DATASET
+# -------------------------------------------------
+
+print("Airbnb Dataset Info (Before Cleaning):\n")
+print(airbnb_df.info(), "\n")
+
+# Remove duplicate records
+airbnb_df.drop_duplicates(inplace=True)
+
+# Handle missing values
+airbnb_df['name'].fillna("Unknown", inplace=True)
+airbnb_df['host_name'].fillna("Unknown", inplace=True)
+airbnb_df['reviews_per_month'].fillna(0, inplace=True)
+
+# Remove rows with invalid price
+airbnb_df = airbnb_df[airbnb_df['price'] > 0]
+
+# Outlier removal (price)
+airbnb_df = airbnb_df[airbnb_df['price'] < 1000]
+
+print("Airbnb Dataset Info (After Cleaning):\n")
+print(airbnb_df.info(), "\n")
+
+# -------------------------------------------------
+# 3. DATA CLEANING – YOUTUBE DATASET
+# -------------------------------------------------
+
+print("YouTube Dataset Info (Before Cleaning):\n")
+print(youtube_df.info(), "\n")
+
+# Remove duplicate videos
+youtube_df.drop_duplicates(inplace=True)
+
+# Handle missing values
+youtube_df['description'].fillna("No Description", inplace=True)
+
+# Convert trending_date to datetime
+youtube_df['trending_date'] = pd.to_datetime(
+    youtube_df['trending_date'], format='%y.%d.%m'
+)
+
+# Remove outliers in views
+youtube_df = youtube_df[youtube_df['views'] >= 0]
+
+print("YouTube Dataset Info (After Cleaning):\n")
+print(youtube_df.info(), "\n")
+
+# -------------------------------------------------
+# 4. STANDARDIZATION
+# -------------------------------------------------
+
+# Standardize column names
+airbnb_df.columns = airbnb_df.columns.str.lower().str.replace(" ", "_")
+youtube_df.columns = youtube_df.columns.str.lower().str.replace(" ", "_")
+
+print("Column standardization completed.\n")
+
+# -------------------------------------------------
+# 5. DATA INTEGRITY CHECK
+# -------------------------------------------------
+
+print("Final Airbnb Missing Values:\n")
+print(airbnb_df.isnull().sum(), "\n")
+
+print("Final YouTube Missing Values:\n")
+print(youtube_df.isnull().sum(), "\n")
+
+# -------------------------------------------------
+# 6. SUMMARY
+# -------------------------------------------------
+
+print("Data Cleaning Completed Successfully.")
+print("✔ Missing values handled")
+print("✔ Duplicates removed")
+print("✔ Outliers treated")
+print("✔ Data standardized")
+
+# -------------------------------------------------
+# End of Program
+# -------------------------------------------------
