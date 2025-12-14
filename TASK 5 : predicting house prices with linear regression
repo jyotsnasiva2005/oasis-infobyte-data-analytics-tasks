@@ -1,0 +1,98 @@
+import os
+
+# Create a directory to store the unzipped files
+if not os.path.exists('data'):
+    os.makedirs('data')
+
+# Unzip the first archive file
+!unzip -o '/content/archive (8).zip' -d data
+
+# List the contents of the 'data' directory to see the extracted CSVs
+print("Contents of 'data' directory:")
+!ls -l data
+# -------------------------------------------------
+# Project : House Price Prediction using Linear Regression
+# Level   : 2
+# Dataset : Housing Price Prediction
+# -------------------------------------------------
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+# -------------------------------------------------
+# 1. Load Dataset
+# -------------------------------------------------
+
+try:
+    df = pd.read_csv("data/Housing.csv") # Corrected path to the dataset
+    print("Dataset loaded successfully\n")
+except:
+    print("Dataset not found")
+    exit()
+
+# -------------------------------------------------
+# 2. Data Preprocessing
+# -------------------------------------------------
+
+# Convert categorical columns to numerical
+df['mainroad'] = df['mainroad'].map({'yes': 1, 'no': 0})
+df['guestroom'] = df['guestroom'].map({'yes': 1, 'no': 0})
+df['basement'] = df['basement'].map({'yes': 1, 'no': 0})
+df['hotwaterheating'] = df['hotwaterheating'].map({'yes': 1, 'no': 0})
+df['airconditioning'] = df['airconditioning'].map({'yes': 1, 'no': 0})
+df['prefarea'] = df['prefarea'].map({'yes': 1, 'no': 0})
+
+df = pd.get_dummies(df, drop_first=True)
+
+# -------------------------------------------------
+# 3. Feature Selection
+# -------------------------------------------------
+
+X = df.drop('price', axis=1)
+y = df['price']
+
+# -------------------------------------------------
+# 4. Train-Test Split
+# -------------------------------------------------
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# -------------------------------------------------
+# 5. Model Training
+# -------------------------------------------------
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# -------------------------------------------------
+# 6. Prediction
+# -------------------------------------------------
+
+y_pred = model.predict(X_test)
+
+# -------------------------------------------------
+# 7. Model Evaluation
+# -------------------------------------------------
+
+print("Mean Squared Error:", mean_squared_error(y_test, y_pred))
+print("R2 Score:", r2_score(y_test, y_pred))
+
+# -------------------------------------------------
+# 8. Visualization
+# -------------------------------------------------
+
+plt.figure()
+plt.scatter(y_test, y_pred)
+plt.xlabel("Actual Price")
+plt.ylabel("Predicted Price")
+plt.title("Actual vs Predicted House Prices")
+plt.show()
+
+# -------------------------------------------------
+# End of Program
+# -------------------------------------------------
