@@ -1,0 +1,128 @@
+import os
+
+# Create a directory to store the unzipped files
+if not os.path.exists('data'):
+    os.makedirs('data')
+
+# Unzip the first archive file
+!unzip -o '/content/archive (1).zip' -d data
+
+# Unzip the second archive file
+!unzip -o '/content/archive (2).zip' -d data
+
+# List the contents of the 'data' directory to see the extracted CSVs
+print("Contents of 'data' directory:")
+!ls -l data
+# ---------------------------------------------
+# Project: Exploratory Data Analysis (EDA)
+# Dataset 1: Retail Sales Data
+# Dataset 2: McDonald's Nutrition Facts
+# ---------------------------------------------
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# ---------------------------------------------
+# 1. Load Datasets
+# ---------------------------------------------
+
+try:
+    retail_df = pd.read_csv("data/retail_sales_dataset.csv")
+    mcd_df = pd.read_csv("data/menu.csv")
+    print("Datasets loaded successfully.\n")
+except FileNotFoundError:
+    print("Error: Please place both CSV files in the same folder.")
+
+# ---------------------------------------------
+# 2. Data Cleaning
+# ---------------------------------------------
+
+def clean_data(df):
+    df.drop_duplicates(inplace=True)
+    df.fillna(df.mean(numeric_only=True), inplace=True)
+    return df
+
+retail_df = clean_data(retail_df)
+mcd_df = clean_data(mcd_df)
+
+# ---------------------------------------------
+# 3. Descriptive Statistics
+# ---------------------------------------------
+
+print("Retail Sales Descriptive Statistics:\n")
+print(retail_df.describe(), "\n")
+
+print("McDonald's Nutrition Descriptive Statistics:\n")
+print(mcd_df.describe(), "\n")
+
+# ---------------------------------------------
+# 4. Time Series Analysis (Retail Sales)
+# ---------------------------------------------
+
+if 'Date' in retail_df.columns and 'Sales' in retail_df.columns:
+    retail_df['Date'] = pd.to_datetime(retail_df['Date'])
+    sales_trend = retail_df.groupby('Date')['Sales'].sum()
+
+    plt.figure()
+    sales_trend.plot()
+    plt.title("Retail Sales Trend Over Time")
+    plt.xlabel("Date")
+    plt.ylabel("Total Sales")
+    plt.show()
+
+# ---------------------------------------------
+# 5. Customer & Product Analysis
+# ---------------------------------------------
+
+if 'Product' in retail_df.columns and 'Sales' in retail_df.columns:
+    product_sales = retail_df.groupby('Product')['Sales'].sum().sort_values(ascending=False)
+
+    plt.figure()
+    product_sales.head(10).plot(kind='bar')
+    plt.title("Top 10 Products by Sales")
+    plt.xlabel("Product")
+    plt.ylabel("Sales")
+    plt.show()
+
+# ---------------------------------------------
+# 6. McDonald's Nutrition Analysis
+# ---------------------------------------------
+
+if 'Item' in mcd_df.columns and 'Calories' in mcd_df.columns:
+    top_calories = mcd_df[['Item', 'Calories']].sort_values(by='Calories', ascending=False).head(10)
+
+    plt.figure()
+    plt.bar(top_calories['Item'], top_calories['Calories'])
+    plt.xticks(rotation=90)
+    plt.title("Top 10 High-Calorie McDonald's Items")
+    plt.ylabel("Calories")
+    plt.show()
+
+# ---------------------------------------------
+# 7. Correlation Heatmaps
+# ---------------------------------------------
+
+plt.figure()
+sns.heatmap(retail_df.corr(numeric_only=True), annot=True)
+plt.title("Retail Sales Correlation Heatmap")
+plt.show()
+
+plt.figure()
+sns.heatmap(mcd_df.corr(numeric_only=True), annot=True)
+plt.title("McDonald's Nutrition Correlation Heatmap")
+plt.show()
+
+# ---------------------------------------------
+# 8. Recommendations
+# ---------------------------------------------
+
+print("Recommendations:")
+print("1. Focus on top-selling retail products to increase revenue.")
+print("2. Optimize inventory during low-sales periods.")
+print("3. Promote healthier, low-calorie food options.")
+
+# ---------------------------------------------
+# End of Program
+# ---------------------------------------------
