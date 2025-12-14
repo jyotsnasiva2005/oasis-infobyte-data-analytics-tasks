@@ -1,0 +1,135 @@
+import zipfile
+import os
+
+zip_files = ['/content/archive (6).zip', '/content/archive (7).zip']
+output_dir = '/content/'
+
+for zip_file_path in zip_files:
+    if os.path.exists(zip_file_path):
+        try:
+            with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+                zip_ref.extractall(output_dir)
+            print(f"Extracted {zip_file_path} to {output_dir}")
+        except zipfile.BadZipFile:
+            print(f"Error: {zip_file_path} is not a valid zip file and could not be extracted.")
+        except Exception as e:
+            print(f"An unexpected error occurred while processing {zip_file_path}: {e}")
+    else:
+        print(f"Warning: {zip_file_path} not found.")
+
+print("Unzipping process completed.")
+
+# -------------------------------------------------
+# Project : Sentiment Analysis
+# Level   : 1
+# Dataset 1: Twitter Sentiment Dataset
+# Dataset 2: Google Play Store User Reviews
+# -------------------------------------------------
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import classification_report, accuracy_score
+
+# -------------------------------------------------
+# 1. Load Datasets
+# -------------------------------------------------
+
+try:
+    twitter_df = pd.read_csv("Twitter_Data.csv")
+    playstore_df = pd.read_csv("googleplaystore_user_reviews.csv")
+    print("Datasets loaded successfully.\n")
+except FileNotFoundError:
+    print("Error: Dataset files not found.")
+    exit()
+
+# -------------------------------------------------
+# 2. DATA CLEANING
+# -------------------------------------------------
+
+# ---- Twitter Dataset ----
+twitter_df.dropna(inplace=True)
+twitter_df['sentiment'] = twitter_df['sentiment'].map({-1: 'Negative', 0: 'Neutral', 1: 'Positive'})
+
+# ---- Play Store Dataset ----
+playstore_df.dropna(subset=['Translated_Review', 'Sentiment'], inplace=True)
+
+# -------------------------------------------------
+# 3. DATA EXPLORATION
+# -------------------------------------------------
+
+print("Twitter Sentiment Distribution:\n")
+print(twitter_df['sentiment'].value_counts(), "\n")
+
+print("Play Store Sentiment Distribution:\n")
+print(playstore_df['Sentiment'].value_counts(), "\n")
+
+# -------------------------------------------------
+# 4. FEATURE ENGINEERING (TF-IDF)
+# -------------------------------------------------
+
+vectorizer = TfidfVectorizer(stop_words='english', max_features=5000)
+
+X = vectorizer.fit_transform(twitter_df['clean_text'])
+y = twitter_df['sentiment']
+
+# -------------------------------------------------
+# 5. TRAIN-TEST SPLIT
+# -------------------------------------------------
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# -------------------------------------------------
+# 6. SENTIMENT CLASSIFICATION (Naive Bayes)
+# -------------------------------------------------
+
+model = MultinomialNB()
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+# -------------------------------------------------
+# 7. MODEL EVALUATION
+# -------------------------------------------------
+
+print("Model Accuracy:", accuracy_score(y_test, y_pred), "\n")
+print("Classification Report:\n", classification_report(y_test, y_pred))
+
+# -------------------------------------------------
+# 8. VISUALIZATION
+# -------------------------------------------------
+
+plt.figure()
+twitter_df['sentiment'].value_counts().plot(kind='bar')
+plt.title("Twitter Sentiment Distribution")
+plt.xlabel("Sentiment")
+plt.ylabel("Count")
+plt.show()
+
+plt.figure()
+playstore_df['Sentiment'].value_counts().plot(kind='bar')
+plt.title("Google Play Store Review Sentiment")
+plt.xlabel("Sentiment")
+plt.ylabel("Count")
+plt.show()
+
+# -------------------------------------------------
+# 9. INSIGHTS & RECOMMENDATIONS
+# -------------------------------------------------
+
+print("Insights & Recommendations:")
+print("1. Majority of tweets reflect public opinion trends.")
+print("2. Negative app reviews indicate areas for improvement.")
+print("3. Positive sentiment users can be targeted for promotions.")
+print("4. Sentiment analysis helps improve customer satisfaction.")
+
+# -------------------------------------------------
+# End of Program
+# -------------------------------------------------
