@@ -1,0 +1,145 @@
+import os
+
+# Create a directory to store the unzipped files
+if not os.path.exists('data'):
+    os.makedirs('data')
+
+# Unzip the first archive file
+!unzip -o '/content/archive (3).zip' -d data
+
+# List the contents of the 'data' directory to see the extracted CSVs
+print("Contents of 'data' directory:")
+!ls -l data
+
+# --------------# -------------------------------------------------
+# Project: Customer Segmentation Analysis
+# Dataset: Customer Personality Analysis (Kaggle)
+# File   : marketing_campaign.csv
+# -------------------------------------------------
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+# -------------------------------------------------
+# 1. Load Dataset
+# -------------------------------------------------
+
+try:
+    df = pd.read_csv("data/marketing_campaign.csv", sep="\t")
+    print("Dataset loaded successfully.\n")
+except FileNotFoundError:
+    print("Error: marketing_campaign.csv not found.")
+    exit()
+
+# -------------------------------------------------
+# 2. Data Cleaning & Exploration
+# -------------------------------------------------
+
+# Drop ID column
+df.drop(columns=['ID'], inplace=True)
+
+# Convert Dt_Customer to datetime
+df['Dt_Customer'] = pd.to_datetime(df['Dt_Customer'], format='%d-%m-%Y')
+
+# Handle missing Income values
+df['Income'].fillna(df['Income'].median(), inplace=True)
+
+# Remove outliers in Income
+df = df[df['Income'] < 600000]
+
+print("Dataset Info:\n")
+print(df.info(), "\n")
+
+# -------------------------------------------------
+# 3. Feature Engineering
+# -------------------------------------------------
+
+# Total spending
+df['Total_Spending'] = (
+    df['MntWines'] + df['MntFruits'] + df['MntMeatProducts'] +
+    df['MntFishProducts'] + df['MntSweetProducts'] + df['MntGoldProds']
+)
+
+# Total purchases
+df['Total_Purchases'] = (
+    df['NumWebPurchases'] + df['NumCatalogPurchases'] + df['NumStorePurchases']
+)
+
+# Select features for clustering
+features = df[['Income', 'Recency', 'Total_Spending', 'Total_Purchases']]
+
+# -------------------------------------------------
+# 4. Descriptive Statistics
+# -------------------------------------------------
+
+print("Descriptive Statistics:\n")
+print(features.describe(), "\n")
+
+# -------------------------------------------------
+# 5. Feature Scaling
+# -------------------------------------------------
+
+scaler = StandardScaler()
+scaled_features = scaler.fit_transform(features)
+
+# -------------------------------------------------
+# 6. K-Means Clustering
+# -------------------------------------------------
+
+kmeans = KMeans(n_clusters=4, random_state=42)
+df['Segment'] = kmeans.fit_predict(scaled_features)
+
+print("Customer Segmentation Completed.\n")
+
+# -------------------------------------------------
+# 7. Visualization
+# -------------------------------------------------
+
+# Scatter Plot
+plt.figure()
+sns.scatterplot(
+    x=df['Income'],
+    y=df['Total_Spending'],
+    hue=df['Segment'],
+    palette='Set2'
+)
+plt.title("Customer Segmentation (Income vs Spending)")
+plt.xlabel("Income")
+plt.ylabel("Total Spending")
+plt.show()
+
+# Bar Chart - Segment Distribution
+plt.figure()
+df['Segment'].value_counts().plot(kind='bar')
+plt.title("Customer Segment Distribution")
+plt.xlabel("Segment")
+plt.ylabel("Number of Customers")
+plt.show()
+
+# -------------------------------------------------
+# 8. Segment Analysis
+# -------------------------------------------------
+
+segment_summary = df.groupby('Segment')[[
+    'Income', 'Recency', 'Total_Spending', 'Total_Purchases'
+]].mean()
+
+print("Segment-wise Customer Analysis:\n")
+print(segment_summary)
+
+# -------------------------------------------------
+# 9. Insights & Recommendations
+# -------------------------------------------------
+
+print("\nInsights & Recommendations:")
+print("1. High-income and high-spending customers should be targeted with premium offers.")
+print("2. Low-recency customers can be re-engaged using discounts and promotions.")
+print("3. Customers with high purchase frequency are ideal for loyalty programs.")
+print("4. Marketing campaigns should be personalized for each customer segment.")
+
+# -------------------------------------------------
+# End of Program-----------------------------------
